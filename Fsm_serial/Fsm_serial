@@ -1,0 +1,75 @@
+module top_module(
+    input clk,
+    input in,
+    input reset,    // Synchronous reset
+    output reg done
+);
+    parameter
+    Idle = 2'b00,
+    S_1 = 2'b01,
+    S_2 = 2'b10,
+    S_3 = 2'b11;
+
+    reg [1:0] state;
+    reg [1:0] next_state;
+    reg [2:0] count;
+
+    always@(posedge clk) begin
+        if(reset) begin
+            state <= S_1;
+        end else begin
+            state <= next_state;
+        end
+    end
+    
+    always@(*) begin
+        case(state)
+        Idle:begin
+            if(in) next_state = S_1;
+            else next_state = Idle;
+        end
+        S_1:begin
+            if (!in) begin
+                next_state = S_2;
+            end else begin
+                next_state = S_1;     
+            end
+        end
+        S_2:begin
+            if(count == 3'd7) begin
+                next_state = S_3;
+             end else begin
+                next_state = S_2;
+             end
+        end
+        S_3:begin
+            if (in) begin
+                next_state = S_1;
+            end else begin
+                next_state = Idle;
+            end
+        end
+        endcase
+    end
+
+    always@(posedge clk) begin
+        if(reset) begin
+            done <= 0;
+        end else if(state == S_3 && in == 1'b1) begin
+            done <= 1;
+        end else begin
+            done <=0;
+        end
+    end
+
+    always@(posedge clk) begin
+        if(reset) begin
+            count <= 0;
+        end else if(state == S_2) begin
+            count <= count + 1'b1;
+        end else begin
+            count <= 0;
+        end
+    end
+
+endmodule
